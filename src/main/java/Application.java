@@ -37,10 +37,10 @@ public class Application<KC, VC, KP, VP, KB, VB> {
             VB value = messages.get(0).getValue();
             messages.remove(0);
             /* OUTPUT MESSAGE ACTIONS START */
-            KP keySend = (KP) key;
-            VP valueSend = (VP) value;
+            KP keyProd = (KP) key;
+            VP valueProd = (VP) value;
             /* OUTPUT MESSAGE ACTIONS END */
-            return new Pair<>(keySend, valueSend);
+            return new Pair<>(keyProd, valueProd);
         }
     }
 
@@ -130,22 +130,19 @@ public class Application<KC, VC, KP, VP, KB, VB> {
         return kafkaOutputProps.get(key);
     }
 
-    private void init() throws IOException {
-        kafkaInputProps.load(new FileReader("src/main/resources/kafka-input.properties"));
-        kafkaOutputProps.load(new FileReader("src/main/resources/kafka-output.properties"));
+    public void startConsumer(String inputPropertiesPath) throws IOException {
+        kafkaInputProps.load(new FileReader(inputPropertiesPath));
         consumer = new KafkaConsumer<>(kafkaInputProps);
         consumer.subscribe(Collections.singletonList((String) getInputProperty("topic")));
-        producer = new KafkaProducer<>(kafkaOutputProps);
-        producerTopic = (String) getOutputProperty("topic");
-    }
-
-    private void startConsumer() {
         ConsumerThread consumerThread = new ConsumerThread(consumer);
         Thread thread = new Thread(consumerThread);
         thread.start();
     }
 
-    private void startProducer() {
+    public void startProducer(String outputPropertiesPath) throws IOException {
+        kafkaOutputProps.load(new FileReader(outputPropertiesPath));
+        producer = new KafkaProducer<>(kafkaOutputProps);
+        producerTopic = (String) getOutputProperty("topic");
         ProducerThread producerThread = new ProducerThread(producer, producerTopic);
         Thread thread = new Thread(producerThread);
         thread.start();
@@ -153,8 +150,7 @@ public class Application<KC, VC, KP, VP, KB, VB> {
 
     public static void main(String[] args) throws IOException {
         Application<String, String, String, Integer, String, String> app = new Application<>();
-        app.init();
-        app.startConsumer();
-        app.startProducer();
+        app.startConsumer("src/main/resources/kafka-input.properties");
+        app.startProducer("src/main/resources/kafka-output.properties");
     }
 }
