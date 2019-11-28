@@ -116,9 +116,6 @@ public class Application<KC, VC, KP, VP, KB, VB> {
 
     private final Properties kafkaInputProps = new Properties();
     private final Properties kafkaOutputProps = new Properties();
-    private Consumer<KC, VC> consumer;
-    private Producer<KP, VP> producer;
-    private String producerTopic;
     private volatile boolean stop = false;
     private Buffer buffer = new Buffer();
 
@@ -132,7 +129,7 @@ public class Application<KC, VC, KP, VP, KB, VB> {
 
     public void startConsumer(String inputPropertiesPath) throws IOException {
         kafkaInputProps.load(new FileReader(inputPropertiesPath));
-        consumer = new KafkaConsumer<>(kafkaInputProps);
+        Consumer<KC, VC> consumer = new KafkaConsumer<>(kafkaInputProps);
         consumer.subscribe(Collections.singletonList((String) getInputProperty("topic")));
         ConsumerThread consumerThread = new ConsumerThread(consumer);
         Thread thread = new Thread(consumerThread);
@@ -141,8 +138,8 @@ public class Application<KC, VC, KP, VP, KB, VB> {
 
     public void startProducer(String outputPropertiesPath) throws IOException {
         kafkaOutputProps.load(new FileReader(outputPropertiesPath));
-        producer = new KafkaProducer<>(kafkaOutputProps);
-        producerTopic = (String) getOutputProperty("topic");
+        Producer<KP, VP> producer = new KafkaProducer<>(kafkaOutputProps);
+        String producerTopic = (String) getOutputProperty("topic");
         ProducerThread producerThread = new ProducerThread(producer, producerTopic);
         Thread thread = new Thread(producerThread);
         thread.start();
